@@ -4,7 +4,9 @@ import json
 import sys
 import os
 import math
+import time
 
+from subprocess import call
 from PIL import Image
 
 supportedExtensions = set([".PNG", ".TGA", ".PPM"])
@@ -42,7 +44,11 @@ def TranslatePath(path, configPath):
 def mkdirFile(filename):
     folder = os.path.dirname(filename)
     if not os.path.exists(folder):
-        os.makedirs(folder)
+        try:
+            original_umask = os.umask(0)
+            os.makedirs(folder, 0777)
+        finally:
+            os.umask(original_umask)
 
 
 def Byteify(input):
@@ -60,6 +66,8 @@ suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 
 
 def PrettyBytes(nbytes):
+    if nbytes < 0:
+        return "-" + PrettyBytes(-nbytes)
     if nbytes == 0:
         return '0 B'
     i = 0
@@ -82,9 +90,16 @@ def IntWithCommas(x):
     return "%d%s" % (x, result)
 
 
+def touch(fname, times=None):
+    with open(fname, 'a'):
+        os.utime(fname, times)
+
+
 def Execute(configPath):
     print("Config file: " + configPath)
     with open(configPath) as configJsonFile:
+        startTime = time.time()
+
         configJson = Byteify(json.load(configJsonFile))
 
         if "global" not in configJson:
@@ -178,8 +193,10 @@ def Execute(configPath):
 
             targetsData[targetName] = {"pixel-count-after": 0,
                                        "pixel-count-before": 0,
-                                       "bytes-count-after": 0,
-                                       "bytes-count-before": 0}
+                                       "GPU-memory-after": 0,
+                                       "GPU-memory-before": 0,
+                                       "disk-bytes-after": 0,
+                                       "disk-bytes-before": 0}
             for filePath, fileData in filesData.iteritems():
                 for func in target["cmds"]:
                     cmd = {}
@@ -225,8 +242,8 @@ def Execute(configPath):
                     targetsData[targetName]["pixel-count-after"] += na
                     targetsData[targetName]["pixel-count-before"] += ra
 
-                    targetsData[targetName]["bytes-count-after"] += na * bpp
-                    targetsData[targetName]["bytes-count-before"] += ra * bpp
+                    targetsData[targetName]["GPU-memory-after"] += na * bpp
+                    targetsData[targetName]["GPU-memory-before"] += ra * bpp
 
                     cmd["path-prefix"] = targetName
                     cmds.append(cmd)
@@ -237,24 +254,59 @@ def Execute(configPath):
             mkdirFile(whereTo)
             print("Target: " + cmd["path-prefix"] + " -> " + cmd["func"] + ": "
                   + os.path.relpath(cmd["path"], scriptPath))
+            if cmd["func"] == "resize":
+                before = os.path.getsize(cmd["path"])
+                targetsData[cmd["path-prefix"]]["disk-bytes-before"] += before
+                touch(whereTo)
+                call(["convert", cmd["path"], "-resize", "%dx%d!" %
+                     (cmd["new-width"], cmd["new-height"]), whereTo])
+                after = os.path.getsize(whereTo)
+                targetsData[cmd["path-prefix"]]["disk-bytes-after"] += after
+            else:
+                print("Function '%s' not found. Skiping" % cmd["func"])
 
+        initialDiskSize = 0
+        finalDiskSize = 0
         for targetName, targetData in targetsData.iteritems():
+            initialDiskSize += targetData["disk-bytes-before"]
+            finalDiskSize += targetData["disk-bytes-after"]
             print("-------------------------------------------------------")
             print("Target: %s" % targetName)
             print("pixel-count-before: %d" % targetData["pixel-count-before"])
             print("pixel-count-after: %d" % targetData["pixel-count-after"])
-            print("bytes-count-before: %s (%s)" %
-                  (IntWithCommas(int(targetData["bytes-count-before"])),
-                   PrettyBytes(targetData["bytes-count-before"])))
-            print("bytes-count-after: %s (%s)" %
-                  (IntWithCommas(int(targetData["bytes-count-after"])),
-                   PrettyBytes(targetData["bytes-count-after"])))
+            print("GPU-memory-before: %s (%s)" %
+                  (IntWithCommas(int(targetData["GPU-memory-before"])),
+                   PrettyBytes(targetData["GPU-memory-before"])))
+            print("GPU-memory-after: %s (%s)" %
+                  (IntWithCommas(int(targetData["GPU-memory-after"])),
+                   PrettyBytes(targetData["GPU-memory-after"])))
             print("Saved memory: %s (%.2f%%)" %
-                  (PrettyBytes(targetData["bytes-count-before"] -
-                   targetData["bytes-count-after"]),
-                   100.0 * (targetData["bytes-count-before"] -
-                   targetData["bytes-count-after"]) /
-                   targetData["bytes-count-before"]))
+                  (PrettyBytes(targetData["GPU-memory-before"] -
+                   targetData["GPU-memory-after"]),
+                   100.0 * (targetData["GPU-memory-before"] -
+                   targetData["GPU-memory-after"]) /
+                   targetData["GPU-memory-before"]))
+
+            print("disk-bytes-before: %s (%s)" %
+                  (IntWithCommas(int(targetData["disk-bytes-before"])),
+                   PrettyBytes(targetData["disk-bytes-before"])))
+            print("disk-bytes-after: %s (%s)" %
+                  (IntWithCommas(int(targetData["disk-bytes-after"])),
+                   PrettyBytes(targetData["disk-bytes-after"])))
+            print("Saved disk memory: %s (%.2f%%)" %
+                  (PrettyBytes(targetData["disk-bytes-before"] -
+                   targetData["disk-bytes-after"]),
+                   100.0 * (targetData["disk-bytes-before"] -
+                   targetData["disk-bytes-after"]) /
+                   targetData["disk-bytes-before"]))
+
+        endTime = time.time()
+
+        initialDiskSize /= len(targetsData)
+        print("-------------------------------------------------------")
+        print("initial-disk-size: %s" % (PrettyBytes(initialDiskSize)))
+        print("final-disk-size: %s" % (PrettyBytes(finalDiskSize)))
+        print("Elapsed time: %.2f s" % (endTime - startTime))
 
         if "pwd" in configJson:
             PopPWD()
