@@ -3,31 +3,31 @@
 try:
     import sys
 except ImportError, e:
-    print("sys module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("sys module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
     import os
 except ImportError, e:
-    print("os module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("os module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
     import math
 except ImportError, e:
-    print("math module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("math module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
     import time
 except ImportError, e:
-    print("time module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("time module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
     from subprocess import call
 except ImportError, e:
-    print("subprocess module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("subprocess module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
