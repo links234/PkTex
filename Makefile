@@ -1,9 +1,12 @@
 install:
 	@echo "Installing PkTex tools ..."
+
 	@echo "Installing pktex-resize ..."
-	cd PkTex-Resize
-	make install -f "PkTex-Resize/Makefile"
-	cd ..
-	cp PkTex-Resize/pktex-resize.py /usr/bin/pktex-resize
+	make -C PkTex-Resize install
 	@echo "pktex-resize install done!"
+
+	@echo "Installing pktex-atlas ..."
+	make -C PkTex-Atlas install
+	@echo "pktex-atlas install done!"
+
 	@echo "PkTex tools install completed!"
