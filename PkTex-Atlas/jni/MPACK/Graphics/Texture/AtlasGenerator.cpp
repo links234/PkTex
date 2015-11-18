@@ -319,8 +319,6 @@ namespace MPACK
 			int maxRange = 0; 
 
 			while ( (1 << (maxRange+1)) <= widthAtlas && (1 << (maxRange+1)) <= heightAtlas ) maxRange++;
-			LOGI("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-			LOGI("maxrange = %d",maxRange);
 
 
 			for (int i = 0; i < res.size(); i++)
@@ -349,8 +347,6 @@ namespace MPACK
 					
 					delete atlas;
 				}
-
-				LOGI("ans = %d",ans);
 
 				if (ans != -1)
 				{
