@@ -59,19 +59,22 @@ namespace MPACK
 				bool hasCategory(int Category);
 				bool tryToAdd(ImageProperty *img);
 				void generateJsonAndImage(Graphics::Image * canvas,  DOM * canvasJson);
+				void getImagesVector(vector<ImageProperty*> &v);
 			};
 
 			public:
 				AtlasGenerator();
-				static bool generateAtlas(const int widthAtlas, const int heightAtlas, const int padding, const int sortType, const string inputPathJSON, const string outputPath, const string prefix);
+				static bool generateAtlas(const int widthAtlas, const int heightAtlas, const int padding, const string inputPathJSON, const string outputPath, const string prefix, const int sortType = BEST_OF_ALL);
 
 			private:
 				static bool generateAtlas(const int widthAtlas, const int heightAtlas, const int sortType, const string outputPath, const string prefix, vector<ImageProperty*> & images);
 				static bool generateAtlasHelper(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res);
 				static int toNumber(const string s);
 				static string toString(const int number);
-				static void clearVector(vector<AtlasTree*> &v);
+				static void clearAtlasTreeVector(vector<AtlasTree*> &v);
+				static void clearImagePropertyVector(vector<ImageProperty*> &v);
 				static string getPath(const string outputPath, const string prefix, const int index);
+				static void resizeImages(const int widthAtlas, const int heightAtlas, vector<AtlasTree*> &res);
 
 				static bool cmpWidth(ImageProperty *x, ImageProperty *y);
 				static bool cmpHeight(ImageProperty *x, ImageProperty *y);

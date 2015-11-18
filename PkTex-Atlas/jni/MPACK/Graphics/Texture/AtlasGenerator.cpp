@@ -17,7 +17,7 @@ namespace MPACK
 		{
 		}
 
-		bool AtlasGenerator::generateAtlas(const int widthAtlas, const int heightAtlas, const int padding, const int sortType, const string inputPathJSON, const string outputPath, const string prefix)
+		bool AtlasGenerator::generateAtlas(const int widthAtlas, const int heightAtlas, const int padding, const string inputPathJSON, const string outputPath, const string prefix, const int sortType)
 		{
 			mPadding = padding;
 
@@ -61,7 +61,10 @@ namespace MPACK
 				images.push_back(image);
 			}
 
-			return generateAtlas(widthAtlas, heightAtlas, sortType, outputPath, prefix,images);
+			bool ok = generateAtlas(widthAtlas, heightAtlas, sortType, outputPath, prefix, images);
+			clearImagePropertyVector(images);
+			LOGI("Atlases created!");
+			return ok;
 		}
 
 		bool AtlasGenerator::generateAtlas(const int widthAtlas,const int heightAtlas, const int sortType, const string outputPath, const string prefix, vector<ImageProperty*> & images)
@@ -69,22 +72,31 @@ namespace MPACK
 			if (sortType == BEST_OF_ALL)
 			{
 				vector<AtlasTree*> res[4];
-				int min = -1, minInd;
+				int minImages = -1, minSize = -1, minInd, totalSize;
+
 				for (int i = 0; i < 4;i++)
 				{
 					bool ok = generateAtlasHelper(widthAtlas, heightAtlas, i+1, images, res[i]);
 					if (!ok) return false;
-					if (min == -1 || min > res[i].size())
+					resizeImages(widthAtlas, heightAtlas, res[i]);
+
+					totalSize = 0;
+					for (int j = 0;j < res[i].size(); j++)
+						totalSize += res[i][j]->width * res[i][j]->height;
+
+					if (minImages == -1 || minImages > res[i].size() || (minImages == res[i].size() && minSize > totalSize))
 					{
-						min = res[i].size();
+						minSize = totalSize;
+						minImages = res[i].size();
 						minInd = i;
 					}
 				}
 
+				DOM *hashJson = new DOM();
 				for (int  i = 0; i < res[minInd].size(); i++)
 				{
 					Graphics::Image *image = new Graphics::Image();
-					image->InitColor(widthAtlas, heightAtlas, Color(255,255,255,0));
+					image->InitColor(res[minInd][i]->width, res[minInd][i]->height, Color(255,255,255,0));
 					DOM *json = new DOM();
 
 					res[minInd][i]->generateJsonAndImage(image, json);
@@ -93,10 +105,16 @@ namespace MPACK
 					image->Save(path + ".png", Graphics::Image::PNG);
 					JSONParser parser;
 					parser.Save(path + ".dom", json, JSONParser::STYLE_PRETTY);
+					hashJson->AddString(path+".dom", path+".png");
+					delete json;
+					delete image;
 				}
+				JSONParser parser;
+				parser.Save(outputPath+"/"+prefix+".dom", hashJson);
+				delete hashJson;
 
 				for (int i = 0; i < 4;i++)
-					clearVector(res[i]);
+					clearAtlasTreeVector(res[i]);
 			}
 			else
 			{
@@ -104,20 +122,29 @@ namespace MPACK
 				bool ok = generateAtlasHelper(widthAtlas, heightAtlas, sortType, images, res);
 				if (!ok) return false;
 
+				resizeImages(widthAtlas, heightAtlas, res);
+
+				DOM *hashJson = new DOM();
 				for (int  i = 0; i < res.size(); i++)
 				{
 					Graphics::Image *image = new Graphics::Image();
-					image->InitColor(widthAtlas, heightAtlas, Color(255,255,255,0));
+					image->InitColor(res[i]->width, res[i]->height, Color(255,255,255,0));
 					DOM *json = new DOM();
 
 					res[i]->generateJsonAndImage(image, json);
 
 					string path = getPath(outputPath, prefix, i);
+					hashJson->AddString(path+".dom", path+".png");
 					image->Save(path + ".png", Graphics::Image::PNG);
 					JSONParser parser;
 					parser.Save(path + ".dom", json, JSONParser::STYLE_PRETTY);
+					delete json;
+					delete image;
 				}
-				clearVector(res);
+				JSONParser parser;
+				parser.Save(outputPath+"/"+prefix+".dom", hashJson);
+				delete hashJson;
+				clearAtlasTreeVector(res);
 			}
 
 			return true;
@@ -150,13 +177,11 @@ namespace MPACK
 				}
 			}
 
-
 			for (int i = 0;i < images.size(); i++)
 			{
 				if (images[i]->width > widthAtlas || images[i]->height > heightAtlas)
 				{
-					LOGI("Imagine prea mare pentru dimensiunile atlasului!");
-					clearVector(res);
+					clearAtlasTreeVector(res);
 					return false;
 				}
 
@@ -186,9 +211,8 @@ namespace MPACK
 					{
 						if (images[k]->width > widthAtlas || images[k]->height > heightAtlas)
 						{
-							LOGI("Imagine prea mare pentru dimensiunile atlasului!");
-							clearVector(res);
-							clearVector(max_atlases);
+							clearAtlasTreeVector(res);
+							clearAtlasTreeVector(max_atlases);
 							return false;
 						}
 						bool ok = false;
@@ -209,7 +233,7 @@ namespace MPACK
 					else
 						left = 0;
 
-					clearVector(max_atlases);
+					clearAtlasTreeVector(max_atlases);
 
 					while (left <= right)
 					{
@@ -247,7 +271,7 @@ namespace MPACK
 
 						for (int p = 0;p < remained; p++)
 							res[p]->deleteCategory(images[i]->category);
-						clearVector(aux);
+						clearAtlasTreeVector(aux);
 
 						if (success)
 						{
@@ -287,6 +311,60 @@ namespace MPACK
 
 			return true;
 		}
+
+
+		void AtlasGenerator::resizeImages(const int widthAtlas, const int heightAtlas, vector<AtlasTree*> &res)
+		{
+			int i;
+			int maxRange = 0; 
+
+			while ( (1 << (maxRange+1)) <= widthAtlas && (1 << (maxRange+1)) <= heightAtlas ) maxRange++;
+			LOGI("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			LOGI("maxrange = %d",maxRange);
+
+
+			for (int i = 0; i < res.size(); i++)
+			{
+				int left = 0, right = maxRange, mid, ans = -1;
+				vector <ImageProperty*> images;
+				res[i]->getImagesVector(images);
+
+				while (left <= right)
+				{
+					mid = (left + right) / 2;
+
+					AtlasTree *atlas = new AtlasTree(0, 0, 1<<mid, 1<<mid);
+					bool ok = true;
+					for (int j = 0;ok && j < images.size(); j++)
+						ok = atlas->tryToAdd(images[j]);
+					
+					if (ok)
+					{
+						if (ans == -1 || ans > mid)
+							ans = mid;
+						right = mid-1;
+					}
+					else
+						left = mid+1;
+					
+					delete atlas;
+				}
+
+				LOGI("ans = %d",ans);
+
+				if (ans != -1)
+				{
+					delete res[i];
+					res[i] = new AtlasTree(0, 0, 1<<ans, 1<<ans);
+					for (int j = 0;j < images.size(); j++)
+						res[i]->tryToAdd(images[j]);
+				}
+
+				clearImagePropertyVector(images);
+			}
+
+		}
+
 
 		AtlasGenerator::AtlasTree::AtlasTree(){}
 		AtlasGenerator::AtlasTree::AtlasTree(int X,int Y, int W, int H):x(X),y(Y),width(W),height(H),busy(false),left(0),right(0)
@@ -347,7 +425,6 @@ namespace MPACK
 		}
 		bool AtlasGenerator::AtlasTree::tryToAdd(ImageProperty *img)
 		{
-			LOGI("width = %d height = %d x = %d y = %d busy = %d",width, height,x,y, busy);
 			if (!busy)
 			{
 				if (width >= img->width && height >= img->height)
@@ -403,6 +480,17 @@ namespace MPACK
 			}
 			if (left) left->generateJsonAndImage(canvas, canvasJson);
 			if (right) right->generateJsonAndImage(canvas, canvasJson);
+		}
+
+		void AtlasGenerator::AtlasTree::getImagesVector(vector<ImageProperty*> &res)
+		{
+			if (busy)
+			{
+				ImageProperty *img = new ImageProperty(imageWidth, imageHeight, path, category);
+				res.push_back(img);
+			}
+			if (left) left->getImagesVector(res);
+			if (right) right->getImagesVector(res);
 		}
 
 		bool AtlasGenerator::cmpWidth(ImageProperty *x, ImageProperty *y)
@@ -472,7 +560,14 @@ namespace MPACK
 		}
 
 
-		void AtlasGenerator::clearVector(vector<AtlasTree*> &v)
+		void AtlasGenerator::clearAtlasTreeVector(vector<AtlasTree*> &v)
+		{
+			for (int i = 0; i < v.size(); i++)
+				delete v[i];
+			v.clear();
+		}
+
+		void AtlasGenerator::clearImagePropertyVector(vector<ImageProperty*> &v)
 		{
 			for (int i = 0; i < v.size(); i++)
 				delete v[i];
