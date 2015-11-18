@@ -2,7 +2,7 @@
 #set -x
 
 sudo apt-get install build-essential
-sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+sudo -E add-apt-repository -y ppa:ubuntu-toolchain-r/test
 sudo apt-get update -qq
 sudo apt-get install g++-4.7
 sudo apt-get install libxxf86vm-dev
