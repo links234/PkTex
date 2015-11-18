@@ -3,25 +3,25 @@
 try:
     import sys
 except ImportError, e:
-    print("sys module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("sys module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
     import os
 except ImportError, e:
-    print("os module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("os module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
     import math
 except ImportError, e:
-    print("math module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("math module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
     import time
 except ImportError, e:
-    print("time module not found! Please make sure you have Python 2.7 installed corectly.")
+    print("time module not found! Please make sure you have Python 2.7 installed correctly.")
     exit(2)
 
 try:
@@ -61,15 +61,25 @@ def GetTexPaths(path):
                 paths.append(filePathAbs)
     return paths
 
-def AtlasNoCategory(path):
+def AtlasNoCategory(filepath):
     jsonData = {}
-    texList = GetTexPaths(path)
+    texList = GetTexPaths(filepath)
     for path in texList:
         jsonData[path] = "-1"
     return jsonData
 
-def AtlasFolderCategory(path):
-    print(GetTexPaths(path))
+def AtlasFolderCategory(filepath):
+    lastCategory = -1
+    folderToCategory = {}
+    jsonData = {}
+    texList = GetTexPaths(filepath)
+    for path in texList:
+        folder = os.path.dirname(path)
+        if folder not in folderToCategory:
+            lastCategory += 1
+            folderToCategory[folder] = lastCategory
+        jsonData[path] = str(folderToCategory[folder])
+    return jsonData
 
 def SaveJSON(data, path):
     with open(path, "w") as outfile:
