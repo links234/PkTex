@@ -1,5 +1,5 @@
-#Location and name of your application 
-OUT = game
+#Location and name of your application
+OUT = pktex-atlas
 
 #Compiler (i.e. g++ for C++, or gcc for C)
 #CXX = g++
@@ -16,10 +16,10 @@ SRC_DIR = jni
 
 #Path to includes (begin each entry with -I)
 LOCAL_C_INCLUDES = $(patsubst %, -I%, $(shell /usr/bin/find $(SRC_DIR) -type d))
-INC =  $(LOCAL_C_INCLUDES) 
+INC =  $(LOCAL_C_INCLUDES)
 
 #Begin each directory location with -L and each flag with -l
-LIBS = -lpng -lm -lXxf86vm -lX11 -lXau -lXdmcp -lXext -lGL -lz 
+LIBS = -lpng -lm -lXxf86vm -lX11 -lXau -lXdmcp -lXext -lGL -lz
 
 CC_SRC = $(shell find $(SRC_DIR) -name '*.c')
 CXX_SRC = $(shell find $(SRC_DIR) -name '*.cpp')
@@ -34,20 +34,19 @@ OBJ_FOLDERS = $(patsubst $(SRC_DIR)%, $(OBJ_DIR)%, $(shell /usr/bin/find $(SRC_D
 OBJS = $(patsubst %,$(OBJ_DIR)%,$(CC_OBJS))
 OBJS += $(patsubst %,$(OBJ_DIR)%,$(CXX_OBJS))
 
-CFLAGS := -O2 -g -DLINUX_PLATFORM
-CXXFLAGS := -O2 -g -std=gnu++11 -DLINUX_PLATFORM
+CFLAGS := -O2 -DLINUX_PLATFORM
+CXXFLAGS := -O2 -std=gnu++11 -DLINUX_PLATFORM
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(OBJ_FOLDERS)
-	$(CC) -c $(INC) -o $@ $< $(CFLAGS) 
+	$(CC) -c $(INC) -o $@ $< $(CFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	mkdir -p $(OBJ_FOLDERS)
-	$(CXX) -c $(INC) -o $@ $< $(CXXFLAGS) 
+	$(CXX) -c $(INC) -o $@ $< $(CXXFLAGS)
 
 $(OUT): $(OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
 clean:
 	rm -f $(OBJS) $(OUT)
-

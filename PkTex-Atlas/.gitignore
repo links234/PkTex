@@ -16,10 +16,10 @@ src/com/android/vending/billing/IInAppBillingService.aidl
 assets/local/
 
 #Windows distro files
-game.exe
+pktex-atlas.exe
 
 #Linux distro files
-game
+pktex-atlas
 
 #Generic desktop distro
 log.html
