@@ -35,6 +35,7 @@ CMD_HELP = 1
 CMD_ATLAS_NO_CATEGORY = 2
 CMD_ATLAS_FOLDER_CATEGORY = 3
 CMD_ATLAS_DEFAULT = CMD_ATLAS_FOLDER_CATEGORY
+CMD_ATLAS_FIX = 4
 
 supportedExtensions = set([".PNG", ".TGA", ".PPM"])
 
@@ -45,6 +46,7 @@ def Help():
     print("\tatlas <path/to/folder> <path/to/output>  ---  generates pktex-atlas JSON using default strategy")
     print("\tatlas-none <path/to/folder> <path/to/output> ---  generates pktex-atlas JSON with no category")
     print("\tatlas-folder <path/to/folder> <path/to/output> ---  generates pktex-atlas JSON with category as folders")
+    print("\tatlas-fix <path/to/atlas.json> <path/to/fix.json> <path/to/output>  ---  change the category according to fix.json rules")
     print("\t--help or -h  ---  show this table")
 
 def GetTexPaths(path):
@@ -81,13 +83,59 @@ def AtlasFolderCategory(filepath):
         jsonData[path] = str(folderToCategory[folder])
     return jsonData
 
+def Intersect(a, b):
+    return list(set(a) & set(b))
+
+def Byteify(input):
+    if isinstance(input, dict):
+        return {Byteify(key): Byteify(value) for key, value
+                in input.iteritems()}
+    elif isinstance(input, list):
+        return [Byteify(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
+def AtlasFix(atlasJson, fixJson):
+    if "set-category" in fixJson and "rename-corresponding-category" in fixJson:
+        setCategoryPathList = []
+        for filePath in fixJson["set-category"]:
+            setCategoryPathList.append(os.path.abspath(filePath))
+        renameCorrespondingCategory = []
+        for filePath in fixJson["rename-corresponding-category"]:
+            renameCorrespondingCategory.append(os.path.abspath(filePath))
+        common = Intersect(setCategoryPathList, renameCorrespondingCategory)
+        if len(common) != 0:
+            print("Error(" + str(len(common)) + "): these paths are found both in 'set-category' and 'rename-corresponding-category': ")
+            for commonPath in common:
+                print(commonPath)
+            exit(2)
+
+    fixAtlasJson = atlasJson
+    if "set-category" in fixJson:
+        for filePath, category in fixJson["set-category"].iteritems():
+            filePathAbs = os.path.abspath(filePath)
+            if filePathAbs in atlasJson:
+                fixAtlasJson[filePathAbs] = category
+            else:
+                print("Could not find '" + filePath + "' in atlas config! Skipping ...")
+    return fixAtlasJson
+
 def SaveJSON(data, path):
     with open(path, "w") as outfile:
         json.dump(data, outfile, indent=4, sort_keys=True)
 
+def LoadJSON(path):
+    data = {}
+    with open(path) as infile:
+        data = Byteify(json.load(infile))
+    return data
+
 def Main():
     cmd = CMD_NONE
-    path = ""
+    path1 = ""
+    path2 = ""
     outputPath = "output"
 
     if len(sys.argv) == 2:
@@ -96,16 +144,22 @@ def Main():
     if len(sys.argv) == 4:
         if sys.argv[1] == "atlas":
             cmd = CMD_ATLAS_DEFAULT
-            path = sys.argv[2]
+            path1 = sys.argv[2]
             outputPath = sys.argv[3]
         if sys.argv[1] == "atlas-folder":
             cmd = CMD_ATLAS_FOLDER_CATEGORY
-            path = sys.argv[2]
+            path1 = sys.argv[2]
             outputPath = sys.argv[3]
         if sys.argv[1] == "atlas-none":
             cmd = CMD_ATLAS_NO_CATEGORY
-            path = sys.argv[2]
+            path1 = sys.argv[2]
             outputPath = sys.argv[3]
+    if len(sys.argv) == 5:
+        if sys.argv[1] == "atlas-fix":
+            cmd = CMD_ATLAS_FIX
+            path1 = sys.argv[2]
+            path2 = sys.argv[3]
+            outputPath = sys.argv[4]
 
     if cmd == CMD_NONE:
         print("Please run: '" + sys.argv[0] + " --help' to see all commands")
@@ -113,10 +167,15 @@ def Main():
     elif cmd == CMD_HELP:
         Help()
     elif cmd == CMD_ATLAS_NO_CATEGORY:
-        atlasJson = AtlasNoCategory(path)
+        atlasJson = AtlasNoCategory(path1)
         SaveJSON(atlasJson, outputPath)
     elif cmd == CMD_ATLAS_FOLDER_CATEGORY:
-        atlasJson = AtlasFolderCategory(path)
+        atlasJson = AtlasFolderCategory(path1)
         SaveJSON(atlasJson, outputPath)
+    elif cmd == CMD_ATLAS_FIX:
+        atlasJson = LoadJSON(path1)
+        fixJson = LoadJSON(path2)
+        fixedAtlasJson = AtlasFix(atlasJson, fixJson)
+        SaveJSON(fixedAtlasJson, outputPath)
 
 Main()
