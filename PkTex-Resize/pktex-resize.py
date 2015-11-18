@@ -161,13 +161,15 @@ def Execute(configPath):
 
         # Update files with "tex-info" structure properties
         if "tex-info" in configJson["global"]:
-            for filePath, texInfo in configJson["global"]["tex-info"].iteritems():
-                filePathAbs = os.path.abspath(filePath)
-                if filePathAbs in filesData:
-                    filesData[filePathAbs].update(texInfo)
-                else:
-                    print("Specified file '" + filePath +
-                          "' is either not found or unsupported")
+            for folder in configJson["folders"]:
+                for filePath, texInfo in configJson["global"]["tex-info"].iteritems():
+                    filePath = folder + "/" + filePath
+                    filePathAbs = os.path.abspath(filePath)
+                    if filePathAbs in filesData:
+                        filesData[filePathAbs].update(texInfo)
+                    else:
+                        print("Specified file '" + filePathAbs +
+                              "' is either not found or unsupported")
 
         targetsData = {}
         cmds = []
