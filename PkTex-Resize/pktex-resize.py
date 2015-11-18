@@ -1,13 +1,46 @@
 #!/usr/bin/python
 
-import json
-import sys
-import os
-import math
-import time
+try:
+    import sys
+except ImportError, e:
+    print("sys module not found! Please make sure you have Python 2.7 installed corectly.")
+    exit(2)
 
-from subprocess import call
-from PIL import Image
+try:
+    import os
+except ImportError, e:
+    print("os module not found! Please make sure you have Python 2.7 installed corectly.")
+    exit(2)
+
+try:
+    import math
+except ImportError, e:
+    print("math module not found! Please make sure you have Python 2.7 installed corectly.")
+    exit(2)
+
+try:
+    import time
+except ImportError, e:
+    print("time module not found! Please make sure you have Python 2.7 installed corectly.")
+    exit(2)
+
+try:
+    from subprocess import call
+except ImportError, e:
+    print("subprocess module not found! Please make sure you have Python 2.7 installed corectly.")
+    exit(2)
+
+try:
+    import json
+except ImportError, e:
+    print("json module not found! Please run 'make install' in this directory.")
+    exit(2)
+
+try:
+    from PIL import Image
+except ImportError, e:
+    print("PIL module not found! Please run 'make install' in this directory.")
+    exit(2)
 
 supportedExtensions = set([".PNG", ".TGA", ".PPM"])
 
