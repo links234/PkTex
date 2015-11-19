@@ -18,7 +18,7 @@ namespace Demo
 
 	int ConsoleApplication::Main()
 	{
-		//LOGI("Demo::ConsoleApplication is working!!!");
+  	//LOGI("Demo::ConsoleApplication is working!!!");
 		//LOGD("Demo::ConsoleApplication has a bug!");
 		//LOGW("Demo::ConsoleApplication this should not be happening, falling back to older version!");
 		//LOGE("Demo::ConsoleApplication error, could not recover");
@@ -37,7 +37,13 @@ namespace Demo
 		help+="                    - 3 - MAX SIDE sorting algorithm\n";
 		help+="                    - 4 - AREA sorting algorithm\n";
 		help+="                    - 5 - BEST OF ALL sorting algorithm [default]\n";
-		int size = arguments.size();
+    int size = arguments.size();
+
+    if (size <= 1)
+    {
+      LOGI(noCommand.c_str());
+      return 0;
+    }
 
 		if (MPACK::Global::arguments[1] != "atlas" || (size != 3 && size != 8 && size != 9))
 		{
