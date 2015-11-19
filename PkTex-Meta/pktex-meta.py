@@ -97,6 +97,13 @@ def Byteify(input):
     else:
         return input
 
+def GetLowestNotInSet(used):
+    current = 0
+    while True:
+        if str(current) not in used:
+            return str(current);
+        current += 1
+
 def AtlasFix(atlasJson, fixJson):
     if "set-category" in fixJson and "rename-corresponding-category" in fixJson:
         setCategoryPathList = []
@@ -113,6 +120,36 @@ def AtlasFix(atlasJson, fixJson):
             exit(2)
 
     fixAtlasJson = atlasJson
+
+    mapper = {}
+    for filePath, category in atlasJson.iteritems():
+        mapper[category] = category
+
+    if "rename-corresponding-category" in fixJson:
+        newMapper = {}
+        newMapperUsedCategories = set([])
+
+        for filePath, category in fixJson["rename-corresponding-category"].iteritems():
+            filePathAbs = os.path.abspath(filePath)
+            if filePathAbs not in atlasJson:
+                print("Could not find '" + filePath + "' int atlas config! Skipping ...")
+            else:
+                oldCategory = atlasJson[filePathAbs]
+                if oldCategory in newMapper and newMapper[oldCategory] != category:
+                    print("Error: You cannot have mappings from one category to multiple categories (split)!")
+                    exit(2)
+                newMapperUsedCategories.add(category)
+                newMapper[oldCategory] = category
+
+        for filePath, category in atlasJson.iteritems():
+            if category not in newMapper:
+                lowest = GetLowestNotInSet(newMapperUsedCategories)
+                newMapper[category] = lowest
+                newMapperUsedCategories.add(lowest)
+
+        for filePath, category in fixAtlasJson.iteritems():
+            fixAtlasJson[filePath] = newMapper[category]
+
     if "set-category" in fixJson:
         for filePath, category in fixJson["set-category"].iteritems():
             filePathAbs = os.path.abspath(filePath)
