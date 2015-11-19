@@ -194,13 +194,13 @@ namespace MPACK
 			{
 				for(int j = 0; j < m_height; ++j)
 				{
-					int offset1 = i * m_width + j;
+					int offset1 = j * m_width + i;
 					offset1 *= m_bytesPerPixel;
 
 					int vi = m_width - i - 1;
 					int vj = j;
 
-					int offset2 = vi * m_width + vj;
+					int offset2 = vj * m_width + vi;
 					offset2 *= m_bytesPerPixel;
 
 					StringEx::MemSwap((char*)(m_imageBuffer + offset1),(char*)(m_imageBuffer + offset2),m_bytesPerPixel);

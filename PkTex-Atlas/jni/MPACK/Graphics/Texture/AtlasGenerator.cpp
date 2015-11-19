@@ -24,9 +24,10 @@ namespace MPACK
 
 			JSONParser parser;
 			DOM *imageJSON;
-      vector<ImageProperty*> images;
+      		vector<ImageProperty*> images;
+     		string realInputPathJSON = "&" + inputPathJSON;
 
-			Algorithm::SearchList<std::string,DOM*> children = parser.Load(inputPathJSON)->Childs();
+			Algorithm::SearchList<std::string,DOM*> children = parser.Load(realInputPathJSON)->Childs();
 			if (children.Size() == 0)
 			{
 				LOGI("generateAtlas : No image found in JSON");
@@ -38,6 +39,7 @@ namespace MPACK
 			{
 				imageJSON = it->value;
 				string path = it->key;
+				path = "&" + path;
 				int category;
 				category = toNumber(imageJSON->GetValue());
 
@@ -62,7 +64,7 @@ namespace MPACK
 
 			bool ok = generateAtlas(widthAtlas, heightAtlas, sortType, outputPath, prefix, images);
 			clearImagePropertyVector(images);
-			LOGI("Atlases created!");
+			if (ok) LOGI("Atlases created!");
 			return ok;
 		}
 
