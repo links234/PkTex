@@ -28,6 +28,7 @@ namespace MPACK
 
 			private:
 
+      static const double threshold;
 			static int mPadding ;
 
 			struct ImageProperty
@@ -68,7 +69,8 @@ namespace MPACK
 
 			private:
 				static bool generateAtlas(const int widthAtlas, const int heightAtlas, const int sortType, const string outputPath, const string prefix, vector<ImageProperty*> & images);
-				static bool generateAtlasHelper(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res);
+				static bool generateAtlasHelperOld(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res);
+        static bool generateAtlasHelper(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res);
 				static int toNumber(const string s);
 				static string toString(const int number);
 				static void clearAtlasTreeVector(vector<AtlasTree*> &v);
@@ -80,6 +82,10 @@ namespace MPACK
 				static bool cmpHeight(ImageProperty *x, ImageProperty *y);
 				static bool cmpMaxSide(ImageProperty *x, ImageProperty *y);
 				static bool cmpArea(ImageProperty *x, ImageProperty *y);
+        static bool cmpCategoryWidth(ImageProperty *x, ImageProperty *y);
+        static bool cmpCategoryHeight(ImageProperty *x, ImageProperty *y);
+        static bool cmpCategoryMaxSide(ImageProperty *x, ImageProperty *y);
+        static bool cmpCategoryArea(ImageProperty *x, ImageProperty *y);
 				static bool cmpLess(AtlasTree *x, AtlasTree *y);
 				static bool cmpBigger(AtlasTree *x, AtlasTree *y);
 		};

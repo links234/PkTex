@@ -12,6 +12,7 @@ namespace MPACK
 	namespace Graphics
 	{
 		int AtlasGenerator::mPadding;
+    const double AtlasGenerator::threshold = (double)20/100;
 
 		AtlasGenerator::AtlasGenerator()
 		{
@@ -23,7 +24,7 @@ namespace MPACK
 
 			JSONParser parser;
 			DOM *imageJSON;
-			vector<ImageProperty*> images;
+      vector<ImageProperty*> images;
 
 			Algorithm::SearchList<std::string,DOM*> children = parser.Load(inputPathJSON)->Childs();
 			if (children.Size() == 0)
@@ -39,8 +40,6 @@ namespace MPACK
 				string path = it->key;
 				int category;
 				category = toNumber(imageJSON->GetValue());
-
-				LOGI("path = %s category = %d",path.c_str(),category);
 
 				Graphics::Image *img = new Graphics::Image();
 				Core::ReturnValue ans = img->Load(path, false);
@@ -150,8 +149,165 @@ namespace MPACK
 			return true;
 		}
 
+    bool AtlasGenerator::generateAtlasHelper(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res)
+    {
+      for (int i = 0; i < images.size(); i++)
+      {
+        if (images[i]->width > widthAtlas || images[i]->height > heightAtlas)
+        {
+          LOGI("Image is bigger than the atlas. Choose better dimensions for the atlas.");
+          clearAtlasTreeVector(res);
+          return false;
+        }
+      }
 
-		bool AtlasGenerator::generateAtlasHelper(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res)
+      switch (sortType)
+      {
+        case WIDTH:
+        {
+          sort(images.begin(), images.end(), cmpCategoryWidth);
+          break;
+        }
+        case HEIGHT:
+        {
+          sort(images.begin(), images.end(), cmpCategoryHeight);
+          break;
+        }
+        case MAX_SIDE:
+        {
+          sort(images.begin(), images.end(), cmpCategoryMaxSide);
+          break;
+        }
+        case AREA:
+        {
+          sort(images.begin(), images.end(), cmpCategoryArea);
+          break;
+        }
+      }
+
+      vector<ImageProperty*> remainingImages;
+      vector<int> atlasInd (images.size(),-1);
+
+      for (int i = 0; i < images.size(); i++)
+      {
+        if (images[i]->category == -1)
+        {
+          remainingImages.push_back(images[i]);
+          continue;
+        }
+        int category = images[i]->category;
+        int j,k,p;
+        vector<AtlasTree*> categoryAtlas;
+        vector<bool> categoryHelper;
+
+        for (j = i; j < images.size() && images[j]->category == category; j++)
+        {
+          bool ok = false;
+          for (k = 0; !ok && k < categoryAtlas.size(); k++)
+          {
+            ok = categoryAtlas[k]->tryToAdd(images[j]);
+            if (ok)
+              atlasInd[j] = k;
+          }
+
+          if (!ok)
+          {
+            AtlasTree *newAtlas = new AtlasTree(0, 0, widthAtlas, heightAtlas);
+            categoryAtlas.push_back(newAtlas);
+            categoryHelper.push_back(false);
+            categoryAtlas[categoryAtlas.size()-1]->tryToAdd(images[j]);
+            atlasInd[j] = categoryAtlas.size()-1;
+          }
+        }
+
+        for (k = 0; k < categoryAtlas.size(); k++)
+        {
+          if ( (double)categoryAtlas[k]->freeSize  / (categoryAtlas[k]->width * categoryAtlas[k]->height)  <= threshold )
+          {
+            categoryHelper[k] = true;
+            res.push_back(categoryAtlas[k]);
+          }
+          else
+            delete categoryAtlas[k];
+        }
+        categoryAtlas.clear();
+
+        for (k = i; k < j; k++)
+          if (atlasInd[k] == -1 || !categoryHelper[atlasInd[k]])
+          {
+            remainingImages.push_back(images[k]);
+            atlasInd[k] = -1;
+          }
+        categoryHelper.clear();
+        i = j-1;
+      }
+
+      switch (sortType)
+      {
+        case WIDTH:
+        {
+          sort(remainingImages.begin(), remainingImages.end(), cmpWidth);
+          break;
+        }
+        case HEIGHT:
+        {
+          sort(remainingImages.begin(), remainingImages.end(), cmpHeight);
+          break;
+        }
+        case MAX_SIDE:
+        {
+          sort(remainingImages.begin(), remainingImages.end(), cmpMaxSide);
+          break;
+        }
+        case AREA:
+        {
+          sort(remainingImages.begin(), remainingImages.end(), cmpArea);
+          break;
+        }
+      }
+
+      for (int i = 0; i < remainingImages.size(); i++)
+        if (remainingImages[i]->category == -1)
+        {
+          sort(res.begin(), res.end(), cmpLess);
+
+          bool ok = false;
+          for (int j = 0; !ok && j < res.size(); j++)
+            ok = res[j]->tryToAdd(remainingImages[i]);
+          if (!ok)
+          {
+            AtlasTree *newAtlas = new AtlasTree(0, 0, widthAtlas, heightAtlas);
+            res.push_back(newAtlas);
+            res[res.size()-1]->tryToAdd(remainingImages[i]);
+          }
+        }
+        else
+        {
+          sort(res.begin(), res.end(), cmpLess);
+
+          bool ok = false;
+          for (int j = 0; !ok && j < res.size(); j++)
+            if (res[j]->hasCategory(remainingImages[i]->category))
+              ok = res[j]->tryToAdd(remainingImages[i]);
+
+          for (int j = 0; !ok && j < res.size(); j++)
+            ok = res[j]->tryToAdd(remainingImages[i]);
+
+          if (!ok)
+          {
+            AtlasTree *newAtlas = new AtlasTree(0, 0, widthAtlas, heightAtlas);
+            res.push_back(newAtlas);
+            res[res.size()-1]->tryToAdd(remainingImages[i]);
+          }
+        }
+
+      remainingImages.clear();
+
+      return true;
+    }
+
+
+		bool AtlasGenerator::generateAtlasHelperOld(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res)
 		{
 			switch (sortType)
 			{
@@ -181,6 +337,7 @@ namespace MPACK
 			{
 				if (images[i]->width > widthAtlas || images[i]->height > heightAtlas)
 				{
+          LOGI("Image is bigger than the atlas. Choose better dimensions for the atlas.");
 					clearAtlasTreeVector(res);
 					return false;
 				}
@@ -316,7 +473,7 @@ namespace MPACK
 		void AtlasGenerator::resizeImages(const int widthAtlas, const int heightAtlas, vector<AtlasTree*> &res)
 		{
 			int i;
-			int maxRange = 0; 
+			int maxRange = 0;
 
 			while ( (1 << (maxRange+1)) <= widthAtlas && (1 << (maxRange+1)) <= heightAtlas ) maxRange++;
 
@@ -335,7 +492,7 @@ namespace MPACK
 					bool ok = true;
 					for (int j = 0;ok && j < images.size(); j++)
 						ok = atlas->tryToAdd(images[j]);
-					
+
 					if (ok)
 					{
 						if (ans == -1 || ans > mid)
@@ -344,7 +501,7 @@ namespace MPACK
 					}
 					else
 						left = mid+1;
-					
+
 					delete atlas;
 				}
 
@@ -447,11 +604,16 @@ namespace MPACK
 			}
 			else
 			{
+        bool ok = false;
 				if (left && left->tryToAdd(img))
-					return true;
-				if (right && right->tryToAdd(img))
-					return true;
-			}
+					ok = true;
+				if (!ok && right && right->tryToAdd(img))
+					ok = true;
+        freeSize = 0;
+        if (left) freeSize += left->freeSize;
+        if (right) freeSize += right->freeSize;
+        return ok;
+      }
 			return false;
 		}
 
@@ -491,59 +653,107 @@ namespace MPACK
 
 		bool AtlasGenerator::cmpWidth(ImageProperty *x, ImageProperty *y)
 		{
-			if (x->category == y->category)
-				return x->width > y->width;
-			else
-			{
-				if (x->category == -1)
-					return false;
-				if (y->category == -1)
-					return true;
-				return (x->category < y->category);
-			}
+			if (x->width == y->width)
+      {
+          if (x->category == -1)
+            return false;
+          if (y->category == -1)
+            return true;
+          return (x->category < y->category);
+      }
+			return x->width > y->width;
 		}
 
 		bool AtlasGenerator::cmpHeight(ImageProperty *x, ImageProperty *y)
 		{
-			if (x->category == y->category)
-				return x->height > y->height;
-			else
-			{
-				if (x->category == -1)
-					return false;
-				if (y->category == -1)
-					return true;
-				return (x->category < y->category);
-			}
+			if (x->height == y->height)
+      {
+          if (x->category == -1)
+            return false;
+          if (y->category == -1)
+            return true;
+          return (x->category < y->category);
+      }
+      return x->height > y->height;
 		}
 
 		bool AtlasGenerator::cmpMaxSide(ImageProperty *x, ImageProperty *y)
 		{
-			if (x->category == y->category)
-				return max(x->width, x->height) > max(y->width, y->height);
-			else
-			{
-				if (x->category == -1)
-					return false;
-				if (y->category == -1)
-					return true;
-				return (x->category < y->category);
-			}
+			if (max(x->width, x->height) == max(y->width, y->height))
+      {
+          if (x->category == -1)
+            return false;
+          if (y->category == -1)
+            return true;
+          return (x->category < y->category);
+      }
+      return max(x->width, x->height) > max(y->width, y->height);
 		}
 
 		bool AtlasGenerator::cmpArea(ImageProperty *x, ImageProperty *y)
 		{
-			if (x->category == y->category)
-				return x->width * x->height > y->width * y->height;
-			else
-			{
-				if (x->category == -1)
-					return false;
-				if (y->category == -1)
-					return true;
-				return (x->category < y->category);
-			}
+      if (x->width * x->height == y->width * y->height)
+      {
+          if (x->category == -1)
+            return false;
+          if (y->category == -1)
+            return true;
+          return (x->category < y->category);
+      }
+      return x->width * x->height > y->width * y->height;
 		}
+
+    bool AtlasGenerator::cmpCategoryWidth(ImageProperty *x, ImageProperty *y)
+    {
+      if (x->category != y->category)
+      {
+          if (x->category == -1)
+            return false;
+          if (y->category == -1)
+            return true;
+          return (x->category < y->category);
+      }
+      return x->width > y->width;
+    }
+
+    bool AtlasGenerator::cmpCategoryHeight(ImageProperty *x, ImageProperty *y)
+    {
+      if (x->category != y->category)
+      {
+          if (x->category == -1)
+            return false;
+          if (y->category == -1)
+            return true;
+          return (x->category < y->category);
+      }
+      return x->height > y->height;
+    }
+
+    bool AtlasGenerator::cmpCategoryMaxSide(ImageProperty *x, ImageProperty *y)
+    {
+      if (x->category != y->category)
+      {
+          if (x->category == -1)
+            return false;
+          if (y->category == -1)
+            return true;
+          return (x->category < y->category);
+      }
+      return max(x->width, x->height) > max(y->width, y->height);
+    }
+
+    bool AtlasGenerator::cmpCategoryArea(ImageProperty *x, ImageProperty *y)
+    {
+      if (x->category != y->category)
+      {
+          if (x->category == -1)
+            return false;
+          if (y->category == -1)
+            return true;
+          return (x->category < y->category);
+      }
+      return x->width * x->height > y->width * y->height;
+    }
 
 		bool AtlasGenerator::cmpLess(AtlasTree *x, AtlasTree *y)
 		{
