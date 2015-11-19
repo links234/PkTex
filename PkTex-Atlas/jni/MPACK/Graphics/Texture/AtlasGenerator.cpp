@@ -18,10 +18,9 @@ namespace MPACK
 		{
 		}
 
-		bool AtlasGenerator::generateAtlas(const int widthAtlas, const int heightAtlas, const int padding, const string inputPathJSON, const string outputPath, const string prefix, const int sortType)
+		bool AtlasGenerator::generateAtlas(const int widthAtlas, const int heightAtlas, const int padding, const string inputPathJSON, const string outputPath, const string prefix, const int count, const int sortType)
 		{
 			mPadding = padding;
-
 			JSONParser parser;
 			DOM *imageJSON;
       		vector<ImageProperty*> images;
@@ -62,13 +61,13 @@ namespace MPACK
 				images.push_back(image);
 			}
 
-			bool ok = generateAtlas(widthAtlas, heightAtlas, sortType, outputPath, prefix, images);
+			bool ok = generateAtlas(widthAtlas, heightAtlas, sortType, outputPath, prefix, images, count+1);
 			clearImagePropertyVector(images);
 			if (ok) LOGI("Atlases created!");
 			return ok;
 		}
 
-		bool AtlasGenerator::generateAtlas(const int widthAtlas,const int heightAtlas, const int sortType, const string outputPath, const string prefix, vector<ImageProperty*> & images)
+		bool AtlasGenerator::generateAtlas(const int widthAtlas,const int heightAtlas, const int sortType, const string outputPath, const string prefix, vector<ImageProperty*> & images, const int count)
 		{
 			if (sortType == BEST_OF_ALL)
 			{
@@ -100,13 +99,13 @@ namespace MPACK
 					image->InitColor(res[minInd][i]->width, res[minInd][i]->height, Color(255,255,255,0));
 					DOM *json = new DOM();
 
-					res[minInd][i]->generateJsonAndImage(image, json);
+					res[minInd][i]->generateJsonAndImage(image, json, count);
 
 					string path = getPath(outputPath, prefix, i);
 					image->Save(path + ".png", Graphics::Image::PNG);
 					JSONParser parser;
 					parser.Save(path + ".dom", json, JSONParser::STYLE_PRETTY);
-					hashJson->AddString(path+".dom", path+".png");
+					hashJson->AddString("@"+path+".dom", "@"+path+".png");
 					delete json;
 					delete image;
 				}
@@ -132,10 +131,10 @@ namespace MPACK
 					image->InitColor(res[i]->width, res[i]->height, Color(255,255,255,0));
 					DOM *json = new DOM();
 
-					res[i]->generateJsonAndImage(image, json);
+					res[i]->generateJsonAndImage(image, json, count);
 
 					string path = getPath(outputPath, prefix, i);
-					hashJson->AddString(path+".dom", path+".png");
+					hashJson->AddString("@"+path+".dom", "@"+path+".png");
 					image->Save(path + ".png", Graphics::Image::PNG);
 					JSONParser parser;
 					parser.Save(path + ".dom", json, JSONParser::STYLE_PRETTY);
@@ -157,7 +156,8 @@ namespace MPACK
       {
         if (images[i]->width > widthAtlas || images[i]->height > heightAtlas)
         {
-          LOGI("Image is bigger than the atlas. Choose better dimensions for the atlas.");
+
+          LOGI("Image %s is bigger than the atlas. Choose better dimensions for the atlas.", images[i]->path.c_str());
           clearAtlasTreeVector(res);
           return false;
         }
@@ -619,7 +619,7 @@ namespace MPACK
 			return false;
 		}
 
-		void AtlasGenerator::AtlasTree::generateJsonAndImage(Graphics::Image * canvas,  DOM * canvasJson)
+		void AtlasGenerator::AtlasTree::generateJsonAndImage(Graphics::Image * canvas,  DOM * canvasJson, const int count)
 		{
 			Graphics::Image *img;
 			if (busy)
@@ -633,13 +633,13 @@ namespace MPACK
 				newDom->AddString("y", toString(y));
 				newDom->AddString("width", toString(imageWidth));
 				newDom->AddString("height", toString(imageHeight));
-				canvasJson->Childs().PushBack(path, newDom);
+				canvasJson->Childs().PushBack("@"+path.substr(count), newDom);
 
 				img->Unload();
 				delete img;
 			}
-			if (left) left->generateJsonAndImage(canvas, canvasJson);
-			if (right) right->generateJsonAndImage(canvas, canvasJson);
+			if (left) left->generateJsonAndImage(canvas, canvasJson, count);
+			if (right) right->generateJsonAndImage(canvas, canvasJson, count);
 		}
 
 		void AtlasGenerator::AtlasTree::getImagesVector(vector<ImageProperty*> &res)
