@@ -9,4 +9,8 @@ install:
 	make -C PkTex-Atlas install
 	@echo "pktex-atlas install done!"
 
+	@echo "Installing pktex-meta ..."
+	make -C PkTex-Meta install
+	@echo "pktex-resize install done!"
+
 	@echo "PkTex tools install completed!"
