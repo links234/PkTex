@@ -173,6 +173,11 @@ def Execute(configPath):
         for path in configJson["exec"]:
             Execute(path)
 
+        result = ""
+
+        if "result" in configJson:
+            result = configJson["result"]
+
         # Get all supported files from folders
         filesData = {}
         for folder in configJson["folders"]:
@@ -187,7 +192,8 @@ def Execute(configPath):
                     if extension.upper() in supportedExtensions:
                         image = Image.open(filePathAbs)
                         bpp = modeToBytesPerPixel[image.mode]
-                        filesData[filePathAbs] = {"save-to": folder,
+                        filesData[filePathAbs] = {"save-to": result,
+                                                  "from-folder": folder,
                                                   "real-width": image.size[0],
                                                   "real-height": image.size[1],
                                                   "bpp": bpp}
@@ -280,23 +286,25 @@ def Execute(configPath):
                     targetsData[targetName]["GPU-memory-after"] += na * bpp
                     targetsData[targetName]["GPU-memory-before"] += ra * bpp
 
-                    cmd["path-prefix"] = targetName
+                    cmd["path-prefix"] = fileData["save-to"] + "/" + targetName
+                    cmd["target-name"] = targetName
+                    cmd["from-folder"] = fileData["from-folder"]
                     cmds.append(cmd)
 
         for cmd in cmds:
             pathPrefix = os.path.abspath(cmd["path-prefix"])
-            whereTo = os.path.join(pathPrefix, os.path.relpath(cmd["path"]))
+            whereTo = os.path.join(pathPrefix, os.path.relpath(cmd["path"], cmd["from-folder"]))
             mkdirFile(whereTo)
-            print("Target: " + cmd["path-prefix"] + " -> " + cmd["func"] + ": "
+            print("Target: " + cmd["target-name"] + " -> " + cmd["func"] + ": "
                   + os.path.relpath(cmd["path"], scriptPath))
             if cmd["func"] == "resize":
                 before = os.path.getsize(cmd["path"])
-                targetsData[cmd["path-prefix"]]["disk-bytes-before"] += before
+                targetsData[cmd["target-name"]]["disk-bytes-before"] += before
                 touch(whereTo)
                 call(["convert", cmd["path"], "-resize", "%dx%d!" %
                      (cmd["new-width"], cmd["new-height"]), whereTo])
                 after = os.path.getsize(whereTo)
-                targetsData[cmd["path-prefix"]]["disk-bytes-after"] += after
+                targetsData[cmd["target-name"]]["disk-bytes-after"] += after
             else:
                 print("Function '%s' not found. Skiping" % cmd["func"])
 
