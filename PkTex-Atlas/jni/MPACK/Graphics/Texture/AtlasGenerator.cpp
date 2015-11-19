@@ -43,7 +43,7 @@ namespace MPACK
 				LOGI("path = %s category = %d",path.c_str(),category);
 
 				Graphics::Image *img = new Graphics::Image();
-				Core::ReturnValue ans = img->Load(path);
+				Core::ReturnValue ans = img->Load(path, false);
 
 				if (ans != RETURN_VALUE_OK)
 				{
@@ -461,7 +461,7 @@ namespace MPACK
 			if (busy)
 			{
 				img = new Graphics::Image();
-				img->Load(path);
+				img->Load(path, false);
 
 				canvas->Blit(img, Math::Vector2<int>(x, y));
 				DOM* newDom = new DOM();
