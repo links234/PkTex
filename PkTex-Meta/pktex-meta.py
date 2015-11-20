@@ -36,6 +36,7 @@ CMD_ATLAS_NO_CATEGORY = 2
 CMD_ATLAS_FOLDER_CATEGORY = 3
 CMD_ATLAS_DEFAULT = CMD_ATLAS_FOLDER_CATEGORY
 CMD_ATLAS_FIX = 4
+CMD_ATLAS_IGNORE = 5
 
 supportedExtensions = set([".PNG", ".TGA", ".PPM"])
 
@@ -47,6 +48,7 @@ def Help():
     print("\tatlas-none <path/to/folder> <path/to/output> ---  generates pktex-atlas JSON with no category")
     print("\tatlas-folder <path/to/folder> <path/to/output> ---  generates pktex-atlas JSON with category as folders")
     print("\tatlas-fix <path/to/atlas.json> <path/to/fix.json> <path/to/output>  ---  change the category according to fix.json rules")
+    print("\tatlas-ignore <path/to/atlas.json> <path/to/ignore.json> <path/to/output>  ---  ignore specified files")
     print("\t--help or -h  ---  show this table")
 
 def GetTexPaths(path):
@@ -159,6 +161,12 @@ def AtlasFix(atlasJson, fixJson):
                 print("Could not find '" + filePath + "' in atlas config! Skipping ...")
     return fixAtlasJson
 
+def AtlasIgnore(atlasJson, ignoreJson):
+    for ignorePath in ignoreJson:
+        ignorePathAbs = os.path.abspath(ignorePath)
+        atlasJson.pop(ignorePathAbs, None)
+    return atlasJson
+
 def SaveJSON(data, path):
     with open(path, "w") as outfile:
         json.dump(data, outfile, indent=4, sort_keys=True)
@@ -197,6 +205,11 @@ def Main():
             path1 = sys.argv[2]
             path2 = sys.argv[3]
             outputPath = sys.argv[4]
+        if sys.argv[1] == "atlas-ignore":
+            cmd = CMD_ATLAS_IGNORE
+            path1 = sys.argv[2]
+            path2 = sys.argv[3]
+            outputPath = sys.argv[4]
 
     if cmd == CMD_NONE:
         print("Please run: '" + sys.argv[0] + " --help' to see all commands")
@@ -214,5 +227,11 @@ def Main():
         fixJson = LoadJSON(path2)
         fixedAtlasJson = AtlasFix(atlasJson, fixJson)
         SaveJSON(fixedAtlasJson, outputPath)
+    elif cmd == CMD_ATLAS_IGNORE:
+        atlasJson = LoadJSON(path1)
+        ignoreJson = LoadJSON(path2)
+        fixedAtlasJson = AtlasIgnore(atlasJson, ignoreJson)
+        SaveJSON(fixedAtlasJson, outputPath)
+
 
 Main()
