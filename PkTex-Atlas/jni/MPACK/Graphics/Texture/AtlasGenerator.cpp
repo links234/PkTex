@@ -104,13 +104,13 @@ namespace MPACK
 					string path = getPath(outputPath, prefix, i);
 					image->Save(path + ".png", Graphics::Image::PNG);
 					JSONParser parser;
-					parser.Save(path + ".dom", json, JSONParser::STYLE_PRETTY);
-					hashJson->AddString("@"+path+".dom", "@"+path+".png");
+					parser.Save(path + ".json", json, JSONParser::STYLE_PRETTY);
+					hashJson->AddString("@"+path+".json", "@"+path+".png");
 					delete json;
 					delete image;
 				}
 				JSONParser parser;
-				parser.Save(outputPath+"/"+prefix+".dom", hashJson);
+				parser.Save(outputPath+"/"+prefix+".json", hashJson);
 				delete hashJson;
 
 				for (int i = 0; i < 4;i++)
@@ -134,15 +134,15 @@ namespace MPACK
 					res[i]->generateJsonAndImage(image, json, count);
 
 					string path = getPath(outputPath, prefix, i);
-					hashJson->AddString("@"+path+".dom", "@"+path+".png");
+					hashJson->AddString("@"+path+".json", "@"+path+".png");
 					image->Save(path + ".png", Graphics::Image::PNG);
 					JSONParser parser;
-					parser.Save(path + ".dom", json, JSONParser::STYLE_PRETTY);
+					parser.Save(path + ".json", json, JSONParser::STYLE_PRETTY);
 					delete json;
 					delete image;
 				}
 				JSONParser parser;
-				parser.Save(outputPath+"/"+prefix+".dom", hashJson);
+				parser.Save(outputPath+"/"+prefix+".json", hashJson);
 				delete hashJson;
 				clearAtlasTreeVector(res);
 			}
