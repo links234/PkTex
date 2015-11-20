@@ -59,18 +59,18 @@ namespace MPACK
 				void deleteCategory(int Category);
 				bool hasCategory(int Category);
 				bool tryToAdd(ImageProperty *img);
-				void generateJsonAndImage(Graphics::Image * canvas,  DOM * canvasJson);
+				void generateJsonAndImage(Graphics::Image * canvas,  DOM * canvasJson, const int count);
 				void getImagesVector(vector<ImageProperty*> &v);
 			};
 
 			public:
 				AtlasGenerator();
-				static bool generateAtlas(const int widthAtlas, const int heightAtlas, const int padding, const string inputPathJSON, const string outputPath, const string prefix, const int sortType = BEST_OF_ALL);
+				static bool generateAtlas(const int widthAtlas, const int heightAtlas, const int padding, const string inputPathJSON, const string outputPath, const string prefix, const int count, const int sortType = BEST_OF_ALL);
 
 			private:
-				static bool generateAtlas(const int widthAtlas, const int heightAtlas, const int sortType, const string outputPath, const string prefix, vector<ImageProperty*> & images);
+				static bool generateAtlas(const int widthAtlas, const int heightAtlas, const int sortType, const string outputPath, const string prefix, vector<ImageProperty*> & images, const int count);
 				static bool generateAtlasHelperOld(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res);
-        static bool generateAtlasHelper(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res);
+        		static bool generateAtlasHelper(const int widthAtlas, const int heightAtlas, const int sortType, vector<ImageProperty*> & images, vector<AtlasTree*> &res);
 				static int toNumber(const string s);
 				static string toString(const int number);
 				static void clearAtlasTreeVector(vector<AtlasTree*> &v);
@@ -82,10 +82,10 @@ namespace MPACK
 				static bool cmpHeight(ImageProperty *x, ImageProperty *y);
 				static bool cmpMaxSide(ImageProperty *x, ImageProperty *y);
 				static bool cmpArea(ImageProperty *x, ImageProperty *y);
-        static bool cmpCategoryWidth(ImageProperty *x, ImageProperty *y);
-        static bool cmpCategoryHeight(ImageProperty *x, ImageProperty *y);
-        static bool cmpCategoryMaxSide(ImageProperty *x, ImageProperty *y);
-        static bool cmpCategoryArea(ImageProperty *x, ImageProperty *y);
+		        static bool cmpCategoryWidth(ImageProperty *x, ImageProperty *y);
+		        static bool cmpCategoryHeight(ImageProperty *x, ImageProperty *y);
+		        static bool cmpCategoryMaxSide(ImageProperty *x, ImageProperty *y);
+		        static bool cmpCategoryArea(ImageProperty *x, ImageProperty *y);
 				static bool cmpLess(AtlasTree *x, AtlasTree *y);
 				static bool cmpBigger(AtlasTree *x, AtlasTree *y);
 		};
