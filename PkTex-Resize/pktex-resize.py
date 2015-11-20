@@ -128,6 +128,19 @@ def touch(fname, times=None):
         os.utime(fname, times)
 
 
+def SaveJSON(data, path):
+    with open(path, "w") as outfile:
+        json.dump(data, outfile, indent=4, sort_keys=True)
+
+
+def GetPowerOfTwo(x):
+    ans = 1
+    while ans <= x:
+        ans = ans * 2
+    ans = ans / 2
+    return ans
+
+
 def Execute(configPath):
     print("Config file: " + configPath)
     with open(configPath) as configJsonFile:
@@ -210,6 +223,26 @@ def Execute(configPath):
                         print("Specified file '" + filePathAbs +
                               "' is either not found or unsupported")
 
+        forcePowerOfTwo = set([])
+
+        metaData = {}
+
+        if "force-power-of-two" in configJson:
+            for path in configJson["force-power-of-two"]:
+                pathAbs = os.path.abspath(path)
+                metaData[pathAbs] = "-2"
+                forcePowerOfTwo.add(pathAbs)
+
+        ignore = set([])
+        if "ignore" in configJson:
+            for path in configJson["ignore"]:
+                pathAbs = os.path.abspath(path)
+                metaData[pathAbs] = "-2"
+                ignore.add(pathAbs)
+
+        if "gen-meta" in configJson:
+            SaveJSON(metaData, configJson["gen-meta"])
+
         targetsData = {}
         cmds = []
         for target in configJson["targets"]:
@@ -239,6 +272,8 @@ def Execute(configPath):
                                        "disk-bytes-after": 0,
                                        "disk-bytes-before": 0}
             for filePath, fileData in filesData.iteritems():
+                if filePath in ignore:
+                    continue
                 for func in target["cmds"]:
                     cmd = {}
                     cmd["func"] = func
@@ -269,6 +304,12 @@ def Execute(configPath):
 
                     if cmd["new-height"] > cmd["real-height"]:
                         cmd["new-height"] = cmd["real-height"]
+
+                    if filePath in forcePowerOfTwo:
+                        cmd["new-width"] = GetPowerOfTwo(cmd["new-width"])
+                        cmd["new-height"] = GetPowerOfTwo(cmd["new-height"])
+                        cmd["new-width"] = max(cmd["new-width"], cmd["new-height"])
+                        cmd["new-height"] = cmd["new-width"]
 
                     nw = cmd["new-width"]
                     nh = cmd["new-height"]
