@@ -2,13 +2,12 @@
 #define MPACK_DEBUG_HPP
 
 #define DEBUG
-#define PROFILE
+//#define PROFILE
 
 //#define MPACK_DEV_DEBUG
 //#define MPACK_DEV_PROFILE
 
 #include "Types.hpp"
-#include "Profiler.hpp"
 #include "Helper.hpp"
 #include "Log.hpp"
 

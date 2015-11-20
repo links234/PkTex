@@ -1,26 +1,15 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-#ifdef ANDROID_PLATFORM
-	#include <android_native_app_glue.h>
-	#include <EGL/egl.h>
-	#include <GLES2/gl2.h>
-	#include <GLES2/gl2ext.h>
-	#include <SLES/OpenSLES.h>
-	#include <SLES/OpenSLES_Android.h>
-	#include <SLES/OpenSLES_AndroidConfiguration.h>
-#elif	defined(WINDOWS_PLATFORM)
+#if	defined(WINDOWS_PLATFORM)
 	#include <windows.h>
-	#include "GLee.h"
 	#include <GL/gl.h>
 	#include <GL/glu.h>
 #elif	defined(LINUX_PLATFORM)
 	#define GLX_GLXEXT_LEGACY
-	#include "GLee.h"
 	#include <GL/glx.h>
 	#include <GL/gl.h>
 	#include <GL/glu.h>
-	#include "glxext.h"
 	#include <cstdarg>
 	#include <cstdio>
 	#include <time.h>

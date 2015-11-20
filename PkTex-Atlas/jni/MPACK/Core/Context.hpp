@@ -2,7 +2,6 @@
 #define MPACK_CONTEXT_HPP
 
 #include "Types.hpp"
-#include "InputService.hpp"
 
 namespace MPACK
 {
@@ -19,21 +18,6 @@ namespace MPACK
 	namespace Time
 	{
 		class TimeService;
-	}
-}
-
-namespace MPACK
-{
-	namespace Core
-	{
-		class Context
-		{
-		public:
-			Graphics::GraphicsService* 		pGraphicsService;
-			Input::InputService*			pInputService;
-			Sound::SoundService*			pSoundService;
-			Time::TimeService* 				pTimeService;
-		};
 	}
 }
 #endif

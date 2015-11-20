@@ -1,4 +1,4 @@
-#include "DemoConsoleApplication.hpp"
+#include "PkTexAtlas.hpp"
 #include "Image.hpp"
 #include "AtlasGenerator.hpp"
 #include "Global.hpp"
@@ -6,23 +6,18 @@
 using namespace MPACK::Global;
 using namespace MPACK::Core::StringEx;
 
-namespace Demo
+namespace PkTex
 {
-	ConsoleApplication::ConsoleApplication()
+	Atlas::Atlas()
 	{
 	}
 
-	ConsoleApplication::~ConsoleApplication()
+	Atlas::~Atlas()
 	{
 	}
 
-	int ConsoleApplication::Main()
+	int Atlas::Main()
 	{
-  	//LOGI("Demo::ConsoleApplication is working!!!");
-		//LOGD("Demo::ConsoleApplication has a bug!");
-		//LOGW("Demo::ConsoleApplication this should not be happening, falling back to older version!");
-		//LOGE("Demo::ConsoleApplication error, could not recover");
-
 		std::string noCommand = "No command found. Use : atlas -help for more info of how to use this script.";
 		std::string help = "Help\nUsage: atlas width[int] height[int] padding[int] Json_Path[string] output_Path[string] prefix[string] absolute_Path_Count[integer] sort_Type[OPTIONAL integer]\n";
 		help+="    -width : an integer representing the maximum width of the atlases\n";
@@ -50,27 +45,28 @@ namespace Demo
 		{
 			LOGI(noCommand.c_str());
 			return 0;
-		}	
+		}
 
-		
+
 		switch (size)
 		{
 			case 3:
 			{
-				if (arguments[2] != "-help") 
+				if (arguments[2] != "-help")
+				{
 					LOGI(noCommand.c_str());
-				else
+				}else
 					LOGI(help.c_str());
 				break;
 			}
 			case 9:
 			{
 				bool res;
-				int widthAtlas, heightAtlas, padding, count; 
+				int widthAtlas, heightAtlas, padding, count;
 				std::string jsonPath, outputPath, prefix;
 
 				res = ToInt(arguments[2], widthAtlas);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The width parameter is not an integer! Use atlas -help for more info.");
 					return 0;
@@ -82,7 +78,7 @@ namespace Demo
 				}
 
 				res = ToInt(arguments[3], heightAtlas);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The height parameter is not an integer! Use atlas -help for more info.");
 					return 0;
@@ -94,7 +90,7 @@ namespace Demo
 				}
 
 				res = ToInt(arguments[4], padding);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The padding parameter is not an integer! Use atlas -help for more info.");
 					return 0;
@@ -110,7 +106,7 @@ namespace Demo
 				prefix = arguments[7];
 
 				res = ToInt(arguments[8], count);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The absolute_Path_Count parameter is not an integer! Use atlas -help for more info.");
 					return 0;
@@ -127,11 +123,11 @@ namespace Demo
 			case 10:
 			{
 				bool res;
-				int widthAtlas, heightAtlas, padding, sortType, count; 
+				int widthAtlas, heightAtlas, padding, sortType, count;
 				std::string jsonPath, outputPath, prefix;
 
 				res = ToInt(arguments[2], widthAtlas);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The width parameter is not an integer! Use atlas -help for more info.");
 					return 0;
@@ -143,7 +139,7 @@ namespace Demo
 				}
 
 				res = ToInt(arguments[3], heightAtlas);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The height parameter is not an integer! Use atlas -help for more info.");
 					return 0;
@@ -155,7 +151,7 @@ namespace Demo
 				}
 
 				res = ToInt(arguments[4], padding);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The padding parameter is not an integer! Use atlas -help for more info.");
 					return 0;
@@ -171,7 +167,7 @@ namespace Demo
 				prefix = arguments[7];
 
 				res = ToInt(arguments[8], count);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The absolute_Path_Count parameter is not an integer! Use atlas -help for more info.");
 					return 0;
@@ -184,7 +180,7 @@ namespace Demo
 
 
 				res = ToInt(arguments[9], sortType);
-				if (!res) 
+				if (!res)
 				{
 					LOGI("The sortType parameter is not an integer! Use atlas -help for more info.");
 					return 0;

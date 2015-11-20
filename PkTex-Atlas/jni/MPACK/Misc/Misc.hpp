@@ -8,8 +8,6 @@
 #include "Animation.hpp"
 #include "AnimationPlayer.hpp"
 
-#include "FileLogger.hpp"
-
 #include "Random.hpp"
 
 #include "StringEx.hpp"

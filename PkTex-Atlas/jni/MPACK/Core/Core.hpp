@@ -7,8 +7,6 @@
 
 #include "Context.hpp"
 
-#include "EventLoop.hpp"
-
 #include "Console.hpp"
 
 #endif

@@ -1,5 +1,5 @@
 #include "MPACK.hpp"
-#include "DemoConsoleApplication.hpp"
+#include "PkTexAtlas.hpp"
 
 int result = 0;
 
@@ -7,7 +7,7 @@ MPACK_MAIN
 {
 	MPACK_INITIALIZE;
 
-	MPACK_RUN(Demo::ConsoleApplication, result);
+	MPACK_RUN(PkTex::Atlas, result);
 
     MPACK_SHUTDOWN;
 
