@@ -233,6 +233,12 @@ def Execute(configPath):
                 metaData[pathAbs] = "-2"
                 forcePowerOfTwo.add(pathAbs)
 
+        keepAspectRatio = set([])
+        if "keep-aspect-ratio" in configJson:
+            for path in configJson["keep-aspect-ratio"]:
+                pathAbs = os.path.abspath(path)
+                keepAspectRatio.add(pathAbs)
+
         ignore = set([])
         if "ignore" in configJson:
             for path in configJson["ignore"]:
@@ -305,11 +311,27 @@ def Execute(configPath):
                     if cmd["new-height"] > cmd["real-height"]:
                         cmd["new-height"] = cmd["real-height"]
 
+                    if filePath in keepAspectRatio:
+                        aspectRatio = 1.0 * cmd["real-width"] / cmd["real-height"]
+                        heightFromWidth = 1.0 * cmd["new-width"] / aspectRatio
+                        widthFromHeight = 1.0 * cmd["new-height"] * aspectRatio
+                        if heightFromWidth > cmd["new-height"]:
+                            cmd["new-height"] = heightFromWidth
+                        else:
+                            cmd["new-width"] = widthFromHeight
+                        cmd["new-width"] = math.ceil(cmd["new-width"])
+                        cmd["new-height"] = math.ceil(cmd["new-height"])
+
                     if filePath in forcePowerOfTwo:
                         cmd["new-width"] = GetPowerOfTwo(cmd["new-width"])
                         cmd["new-height"] = GetPowerOfTwo(cmd["new-height"])
                         cmd["new-width"] = max(cmd["new-width"], cmd["new-height"])
                         cmd["new-height"] = cmd["new-width"]
+
+                    if cmd["new-width"] <= 1:
+                        cmd["new-width"] = 1
+                    if cmd["new-height"] <= 1:
+                        cmd["new-height"] = 1
 
                     nw = cmd["new-width"]
                     nh = cmd["new-height"]
